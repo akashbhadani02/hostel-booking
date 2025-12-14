@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hostel Dashboard</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .controls {
+    max-width: 1000px;
+    margin: 10px auto;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  select, input {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .stats {
+    max-width: 1000px;
+    margin: 10px auto;
+    display: flex;
+    justify-content: space-around;
+    font-weight: bold;
+  }
+
+  .rooms {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    max-width: 1000px;
+    margin: auto;
+  }
+
+  .room-btn {
+    padding: 15px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+  }
+
+  .empty { background: #28a745; }
+  .occupied { background: #dc3545; }
+  .cleaning { background: #ffc107; color: black; }
+  .maintenance { background: #007bff; }
+
+</style>
+</head>
+
+<body>
+
+<h1>🏨SPSS Hostel Room</h1>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <select id="floorFilter">
+    <option value="">All Floors</option>
+    <option value="1">1st Floor</option>
+    <option value="2">2nd Floor</option>
+    <option value="3">3rd Floor</option>
+    <option value="4">4th Floor</option>
+    <option value="5">5th Floor</option>
+    <option value="6">6th Floor</option>
+    <option value="7">7th Floor</option>
+    <option value="8">8th Floor</option>
+    <option value="9">9th Floor</option>
+    <option value="10">10th Floor</option>
+    <option value="11">11th Floor</option>
+    <option value="12">12th Floor</option>
+    <option value="13">13th Floor</option>
+  </select>
+
+  <input type="number" id="searchRoom" placeholder="Search room">
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div>🟢 Empty: <span id="emptyCount">0</span></div>
+  <div>🔴 Occupied: <span id="occupiedCount">0</span></div>
+  <div>🟡 Cleaning: <span id="cleaningCount">0</span></div>
+  <div>🔵 Maintenance: <span id="maintenanceCount">0</span></div>
+</div>
+
+<!-- ROOMS -->
+ <div class="controls">
+  <input type="number" id="newRoom" placeholder="Enter room number">
+  <button onclick="addRoom()">➕ Add Room</button>
+
+  <input type="number" id="deleteRoom" placeholder="Room to delete">
+  <button onclick="deleteRoom()">❌ Delete Room</button>
+</div>
+
+
+<div class="rooms" id="rooms"></div>
+
+<script>
+let allRooms = [];
+
+async function loadRooms() {
+  const res = await fetch('/api/rooms');
+  allRooms = await res.json();
+  renderRooms();
+}
+
+function renderRooms() {
+  const container = document.getElementById('rooms');
+  container.innerHTML = '';
+
+  const floor = document.getElementById('floorFilter').value;
+  const search = document.getElementById('searchRoom').value;
+
+  let filtered = allRooms;
+
+  if (floor) {
+    filtered = filtered.filter(r => String(r.room).startsWith(floor));
+  }
+
+  if (search) {
+    filtered = filtered.filter(r => String(r.room).includes(search));
+  }
+
+  // Stats
+  const stats = { empty:0, occupied:0, cleaning:0, maintenance:0 };
+  allRooms.forEach(r => stats[r.status]++);
+
+  emptyCount.innerText = stats.empty;
+  occupiedCount.innerText = stats.occupied;
+  cleaningCount.innerText = stats.cleaning;
+  maintenanceCount.innerText = stats.maintenance;
+
+  filtered.forEach(r => {
+    const btn = document.createElement('button');
+    btn.className = `room-btn ${r.status}`;
+    btn.innerText = r.room;
+
+    btn.onclick = () => cycleStatus(r);
+    container.appendChild(btn);
+  });
+}
+
+async function cycleStatus(room) {
+  const order = ['empty', 'occupied', 'cleaning', 'maintenance'];
+  const next = order[(order.indexOf(room.status) + 1) % order.length];
+
+  await fetch('/api/room/' + room.room, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: next })
+  });
+
+  loadRooms();
+}
+
+floorFilter.onchange = renderRooms;
+searchRoom.oninput = renderRooms;
+
+loadRooms();
+
+async function addRoom() {
+  const room = document.getElementById('newRoom').value;
+
+  if (!room) {
+    alert("Enter room number");
+    return;
+  }
+
+  const res = await fetch('/api/add-room', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room: Number(room) })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    document.getElementById('newRoom').value = '';
+    loadRooms(); // refresh buttons
+  } else {
+    alert(data.message);
+  }
+}
+
+async function deleteRoom() {
+  const room = document.getElementById('deleteRoom').value;
+
+  if (!room) {
+    alert("Enter room number to delete");
+    return;
+  }
+
+  if (!confirm(`Delete room ${room}?`)) return;
+
+  const res = await fetch('/api/delete-room/' + room, {
+    method: 'DELETE'
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    document.getElementById('deleteRoom').value = '';
+    loadRooms(); // refresh
+  } else {
+    alert(data.message);
+  }
+}
+
+
+</script>
+
+</body>
+</html>
