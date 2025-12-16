@@ -61,6 +61,58 @@
   .cleaning { background: #ffc107; color: black; }
   .maintenance { background: #007bff; }
 
+.floor-section {
+  margin-bottom: 30px;
+}
+
+.floor-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 15px 0 10px;
+  color: #333;
+}
+
+.floor-rooms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+/* ===== VIDEO GALLERY ===== */
+.video-gallery-section {
+  max-width: 1000px;
+  margin: 40px auto;
+}
+
+.video-gallery-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.video-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.video-gallery video {
+  width: 100%;
+  border-radius: 8px;
+  background: black;
+}
+
+.video-item {
+  text-align: center;
+}
+
+.video-title {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
 </style>
 </head>
 
@@ -107,6 +159,29 @@
   <button onclick="deleteRoom()">❌ Delete Room</button>
 </div>
 
+<!-- ===== VIDEO GALLERY SECTION ===== -->
+<div class="video-gallery-section">
+  <div class="video-gallery-title">🎥 Hostel Video Gallery</div>
+
+  <div class="video-gallery">
+
+    <div class="video-item">
+      <video controls autoplay>
+        <source src="/image_video/video/9 sharing.mp4" type="video/mp4">
+      </video>
+      <div class="video-title">9 Sharing</div>
+    </div>
+
+    <div class="video-item">
+      <video controls>
+        <source src="/image_video/video/twin.mp4" type="video/mp4">
+      </video>
+      <div class="video-title">Twin Sharing</div>
+    </div>
+
+  </div>
+</div>
+
 
 <div class="rooms" id="rooms"></div>
 
@@ -123,37 +198,57 @@ function renderRooms() {
   const container = document.getElementById('rooms');
   container.innerHTML = '';
 
-  const floor = document.getElementById('floorFilter').value;
+  const floorFilter = document.getElementById('floorFilter').value;
   const search = document.getElementById('searchRoom').value;
 
-  let filtered = allRooms;
-
-  if (floor) {
-    filtered = filtered.filter(r => String(r.room).startsWith(floor));
-  }
-
-  if (search) {
-    filtered = filtered.filter(r => String(r.room).includes(search));
-  }
-
-  // Stats
+  // ---- stats ----
   const stats = { empty:0, occupied:0, cleaning:0, maintenance:0 };
   allRooms.forEach(r => stats[r.status]++);
-
   emptyCount.innerText = stats.empty;
   occupiedCount.innerText = stats.occupied;
   cleaningCount.innerText = stats.cleaning;
   maintenanceCount.innerText = stats.maintenance;
 
-  filtered.forEach(r => {
-    const btn = document.createElement('button');
-    btn.className = `room-btn ${r.status}`;
-    btn.innerText = r.room;
+  // ---- group rooms by floor ----
+  const floors = {};
 
-    btn.onclick = () => cycleStatus(r);
-    container.appendChild(btn);
+  allRooms.forEach(r => {
+    const roomStr = String(r.room);
+    const floor = roomStr.slice(0, roomStr.length - 2); // floor number
+
+    if (floorFilter && floor !== floorFilter) return;
+    if (search && !roomStr.includes(search)) return;
+
+    if (!floors[floor]) floors[floor] = [];
+    floors[floor].push(r);
+  });
+
+  // ---- render floors ----
+  Object.keys(floors).sort((a,b)=>a-b).forEach(floor => {
+    const section = document.createElement('div');
+    section.className = 'floor-section';
+
+    const title = document.createElement('div');
+    title.className = 'floor-title';
+    title.innerText = `Floor ${floor}`;
+
+    const roomWrap = document.createElement('div');
+    roomWrap.className = 'floor-rooms';
+
+    floors[floor].forEach(r => {
+      const btn = document.createElement('button');
+      btn.className = `room-btn ${r.status}`;
+      btn.innerText = r.room;
+      btn.onclick = () => cycleStatus(r);
+      roomWrap.appendChild(btn);
+    });
+
+    section.appendChild(title);
+    section.appendChild(roomWrap);
+    container.appendChild(section);
   });
 }
+
 
 async function cycleStatus(room) {
   const order = ['empty', 'occupied', 'cleaning', 'maintenance'];
