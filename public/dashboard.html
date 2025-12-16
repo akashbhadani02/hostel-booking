@@ -66,7 +66,7 @@
 
 <body>
 
-<h1>🏨SPSS Hostel Rooms</h1>
+<h1>🏨SPSS Hostel Room</h1>
 
 <!-- CONTROLS -->
 <div class="controls">
@@ -221,28 +221,6 @@ async function deleteRoom() {
   }
 }
 
-  async function markOccupied(roomNumber) {
-  const name = prompt("Enter name:");
-
-  if (!name) {
-    alert("Name is required");
-    return;
-  }
-
-  await fetch(`/api/room/${roomNumber}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      status: name
-    })
-  });
-
-  location.reload();
-}
-
 </script>
-
 </body>
 </html>
