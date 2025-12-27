@@ -146,7 +146,7 @@ function renderRooms() {
   const search = document.getElementById('searchRoom').value;
 
   // ---- stats ----
-  const stats = { empty:0, occupied:0, cleaning:0, maintenance:0 , working:0};
+  const stats = { empty:0, occupied:0, cleaning:0, maintenance:0, working:0};
   allRooms.forEach(r => stats[r.status]++);
   emptyCount.innerText = stats.empty;
   occupiedCount.innerText = stats.occupied;
