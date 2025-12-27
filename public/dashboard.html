@@ -196,7 +196,7 @@ function renderRooms() {
 
 
 async function cycleStatus(room) {
-  const order = ['empty', 'occupied', 'cleaning', 'maintenance', 'work'];
+  const order = ['empty', 'occupied', 'cleaning', 'maintenance', 'working'];
   const next = order[(order.indexOf(room.status) + 1) % order.length];
 
   await fetch('/api/room/' + room.room, {
