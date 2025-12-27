@@ -152,7 +152,7 @@ function renderRooms() {
   occupiedCount.innerText = stats.occupied;
   cleaningCount.innerText = stats.cleaning;
   maintenanceCount.innerText = stats.maintenance;
-  stats.maintenance = workingCount;
+  workingCount.innerText = stats.working;
 
   // ---- group rooms by floor ----
   const floors = {};
