@@ -83,39 +83,6 @@
   cursor: pointer;
 }
 
-/* Tooltip box */
-.guest-tooltip {
-  position: absolute;
-  bottom: 120%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: black;
-  color: white;
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 5px;
-  white-space: nowrap;
-  display: none;
-  z-index: 100;
-}
-
-/* Arrow */
-.guest-tooltip::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 5px;
-  border-style: solid;
-  border-color: black transparent transparent transparent;
-}
-
-/* Show on hover */
-.room:hover .guest-tooltip {
-  display: block;
-}
-
 
 </style>
 </head>
@@ -300,14 +267,6 @@ async function deleteRoom() {
   }
 }
 
-  document.querySelectorAll(".room").forEach(room => {
-  const guestName = room.getAttribute("data-guest");
-
-  if (guestName) {
-    room.querySelector(".guest-tooltip").innerText =
-      "Guest: " + guestName;
-  }
-});
 </script>
   
 </body>
