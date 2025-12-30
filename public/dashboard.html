@@ -329,9 +329,14 @@ async function saveStatus(){
   <!-- STATUS MODAL -->
 <div class="status-modal" id="statusModal">
   <div class="status-box">
-    <h3 id="roomTitle"></h3>
+   <h3 id="roomTitle"></h3>
 
-    <select id="statusSelect" onchange="updateSelectColor()">
+<label for="statusSelect" style="font-weight:bold;display:block;margin-bottom:5px;">
+  Room Status
+</label>
+
+<select id="statusSelect" onchange="updateSelectColor()">
+
       <option value="empty">Empty</option>
       <option value="occupied">Occupied</option>
       <option value="cleaning">Cleaning</option>
