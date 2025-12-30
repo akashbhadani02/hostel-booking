@@ -83,34 +83,6 @@
   cursor: pointer;
 }
 
-/* STATUS SELECT MODAL */
-.status-modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.4);
-  display:none;
-  justify-content:center;
-  align-items:center;
-}
-.status-box{
-  background:#fff;
-  padding:15px;
-  border-radius:10px;
-  width:220px;
-}
-.status-box select{
-  width:100%;
-  padding:8px;
-  font-weight:bold;
-  border-radius:6px;
-}
-
-/* SELECT COLOR CHANGE */
-#statusSelect.empty{background:#28a745;color:#fff;}
-#statusSelect.occupied{background:#dc3545;color:#fff;}
-#statusSelect.cleaning{background:#ffc107;color:#000;}
-#statusSelect.maintenance{background:#007bff;color:#fff;}
-#statusSelect.working{background:#5c584e;color:#fff;}
 
 </style>
 </head>
@@ -218,7 +190,7 @@ function renderRooms() {
       const btn = document.createElement('button');
       btn.className = `room-btn ${r.status}`;
       btn.innerText = r.room;
-      btn.onclick = () => openStatusModal(r);
+      btn.onclick = () => cycleStatus(r);
       roomWrap.appendChild(btn);
     });
 
@@ -294,60 +266,8 @@ async function deleteRoom() {
     alert(data.message);
   }
 }
-let selectedRoom = null;
-
-function openStatusModal(room){
-  selectedRoom = room;
-  statusModal.style.display = "flex";
-  roomTitle.innerText = "Room " + room.room;
-  statusSelect.value = room.status;
-  updateSelectColor();
-}
-
-function closeStatus(){
-  statusModal.style.display = "none";
-}
-
-function updateSelectColor(){
-  statusSelect.className = "";
-  statusSelect.classList.add(statusSelect.value);
-}
-
-async function saveStatus(){
-  await fetch('/api/room/' + selectedRoom.room, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: statusSelect.value })
-  });
-
-  closeStatus();
-  loadRooms();
-}
-
 
 </script>
-  <!-- STATUS MODAL -->
-<div class="status-modal" id="statusModal">
-  <div class="status-box">
-   <h3 id="roomTitle"></h3>
-
-<label for="statusSelect" style="font-weight:bold;display:block;margin-bottom:5px;">
-  Room Status
-</label>
-
-<select id="statusSelect" onchange="updateSelectColor()">
-
-      <option value="empty">Empty</option>
-      <option value="occupied">Occupied</option>
-      <option value="cleaning">Cleaning</option>
-      <option value="maintenance">Checkout</option>
-      <option value="working">Problem</option>
-    </select>
-
-    <button onclick="saveStatus()">Save</button>
-    <button onclick="closeStatus()">Cancel</button>
-  </div>
-</div>
-
+  
 </body>
 </html>
