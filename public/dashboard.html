@@ -5,65 +5,97 @@
 <title>SPSS Hostel Dashboard By AB</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  padding: 20px;
-}
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    padding: 20px;
+  }
 
-h1 {
-  text-align: center;
-  margin-bottom: 10px;
-}
+  h1 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
 
-.controls {
-  max-width: 1000px;
-  margin: 10px auto;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+  .controls {
+    max-width: 1000px;
+    margin: 10px auto;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 
-select, input {
-  padding: 8px;
-  font-size: 14px;
-}
+  select, input {
+    padding: 8px;
+    font-size: 14px;
+  }
 
-.stats {
-  max-width: 1000px;
-  margin: 10px auto;
-  display: flex;
-  justify-content: space-around;
-  font-weight: bold;
-}
+  .stats {
+    max-width: 1000px;
+    margin: 10px auto;
+    display: flex;
+    justify-content: space-around;
+    font-weight: bold;
+  }
 
-.rooms {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 10px;
-  max-width: 1000px;
-  margin: auto;
-}
+  .rooms {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    max-width: 1000px;
+    margin: auto;
+  }
 
-.room-btn {
+  .room-btn {
+    padding: 15px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+  }
+  .room-btn {
   position: relative;
-  padding: 15px 0;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  color: white;
 }
 
-.empty { background: #28a745; }
-.occupied { background: #dc3545; }
-.cleaning { background: #ffc107; color: black; }
-.maintenance { background: #007bff; }
-.working { background: #5c584e; color: white; }
+.note-icon {
+  position: absolute;
+  top: 3px;
+  right: 6px;
+  font-size: 13px;
+}
 
-.floor-section { margin-bottom: 30px; }
+.note-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.room-btn:hover .note-tooltip {
+  display: block;
+}
+
+
+  .empty { background: #28a745; }
+  .occupied { background: #dc3545; }
+  .cleaning { background: #ffc107; color: black; }
+  .maintenance { background: #007bff; }
+  .working { background: #5c584e; color : white }
+
+.floor-section {
+  margin-bottom: 30px;
+}
+
 .floor-title {
   font-size: 18px;
   font-weight: bold;
@@ -76,43 +108,18 @@ select, input {
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 10px;
 }
-
-/* 📝 NOTE ICON */
-.note-icon {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  font-size: 12px;
-  pointer-events: none;
+.room {
+  position: relative;
+  cursor: pointer;
 }
 
-/* NOTE TOOLTIP */
-.room-btn[data-note]:hover::after {
-  content: attr(data-note);
-  position: absolute;
-  bottom: 115%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  color: #fff;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  max-width: 180px;
-  white-space: pre-wrap;
-  z-index: 20;
-}
 
-/* mobile tap */
-.room-btn[data-note]:active::after {
-  display: block;
-}
 </style>
 </head>
 
 <body>
 
-<h1>🏨 SPSS Hostel Room</h1>
+<h1>🏨SPSS Hostel Room</h1>
 
 <!-- CONTROLS -->
 <div class="controls">
@@ -145,9 +152,9 @@ select, input {
   <div>⚫ અવ્યવસ્થા: <span id="workingCount">0</span></div>
 </div>
 
-<!-- ROOM CONTROLS -->
-<div class="controls">
-  Date <input type="date">
+<!-- ROOMS --> 
+ <div class="controls">
+  Date<input type="date" placeholder="Enter Date">
   <input type="number" id="newRoom" placeholder="Enter room number">
   <button onclick="addRoom()">➕ Add Room</button>
 
@@ -155,9 +162,29 @@ select, input {
   <button onclick="deleteRoom()">❌ Delete Room</button>
 </div>
 
+
 <div class="rooms" id="rooms"></div>
 
 <script>
+    const roomNotes = JSON.parse(localStorage.getItem('roomNotes') || '{}');
+
+function saveNotes() {
+  localStorage.setItem('roomNotes', JSON.stringify(roomNotes));
+}
+
+function editNote(roomNo) {
+  const text = prompt(`Note for Room ${roomNo}`, roomNotes[roomNo] || '');
+  if (text === null) return;
+
+  if (text.trim() === '') {
+    delete roomNotes[roomNo];
+  } else {
+    roomNotes[roomNo] = text.trim();
+  }
+  saveNotes();
+  renderRooms();
+}
+
 let allRooms = [];
 
 async function loadRooms() {
@@ -170,30 +197,33 @@ function renderRooms() {
   const container = document.getElementById('rooms');
   container.innerHTML = '';
 
-  const floorFilter = floorFilterEl.value;
-  const search = searchRoom.value;
+  const floorFilter = document.getElementById('floorFilter').value;
+  const search = document.getElementById('searchRoom').value;
 
-  const stats = { empty:0, occupied:0, cleaning:0, maintenance:0, working:0 };
+  // ---- stats ----
+  const stats = { empty:0, occupied:0, cleaning:0, maintenance:0, working:0};
   allRooms.forEach(r => stats[r.status]++);
-
   emptyCount.innerText = stats.empty;
   occupiedCount.innerText = stats.occupied;
   cleaningCount.innerText = stats.cleaning;
   maintenanceCount.innerText = stats.maintenance;
   workingCount.innerText = stats.working;
 
+  // ---- group rooms by floor ----
   const floors = {};
+
   allRooms.forEach(r => {
     const roomStr = String(r.room);
-    const floor = roomStr.slice(0, -2);
+    const floor = roomStr.slice(0, roomStr.length - 2); // floor number
 
     if (floorFilter && floor !== floorFilter) return;
     if (search && !roomStr.includes(search)) return;
 
-    floors[floor] ??= [];
+    if (!floors[floor]) floors[floor] = [];
     floors[floor].push(r);
   });
 
+  // ---- render floors ----
   Object.keys(floors).sort((a,b)=>a-b).forEach(floor => {
     const section = document.createElement('div');
     section.className = 'floor-section';
@@ -202,76 +232,60 @@ function renderRooms() {
     title.className = 'floor-title';
     title.innerText = `Floor ${floor}`;
 
-    const wrap = document.createElement('div');
-    wrap.className = 'floor-rooms';
+    const roomWrap = document.createElement('div');
+    roomWrap.className = 'floor-rooms';
 
     floors[floor].forEach(r => {
       const btn = document.createElement('button');
       btn.className = `room-btn ${r.status}`;
       btn.innerText = r.room;
+btn.onclick = () => cycleStatus(r);
 
-      // 📝 NOTE
-      if (r.note && r.note.trim()) {
-        btn.setAttribute('data-note', r.note);
-        const icon = document.createElement('span');
-        icon.className = 'note-icon';
-        icon.innerText = '📝';
-        btn.appendChild(icon);
-      }
+// 📝 NOTE ICON + TOOLTIP
+if (roomNotes[r.room]) {
+  const icon = document.createElement('span');
+  icon.className = 'note-icon';
+  icon.innerText = '📝';
+  btn.appendChild(icon);
 
-      addLongPressNote(btn, r);
-      btn.onclick = () => cycleStatus(r);
-      wrap.appendChild(btn);
+  const tip = document.createElement('div');
+  tip.className = 'note-tooltip';
+  tip.innerText = roomNotes[r.room];
+  btn.appendChild(tip);
+}
+
+// LONG PRESS (MOBILE)
+let pressTimer;
+btn.addEventListener('touchstart', () => {
+  pressTimer = setTimeout(() => editNote(r.room), 600);
+});
+btn.addEventListener('touchend', () => clearTimeout(pressTimer));
+
+// RIGHT CLICK (PC)
+btn.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  editNote(r.room);
+});
+
+roomWrap.appendChild(btn);
+
     });
 
     section.appendChild(title);
-    section.appendChild(wrap);
+    section.appendChild(roomWrap);
     container.appendChild(section);
   });
 }
 
+
 async function cycleStatus(room) {
-  const order = ['empty','occupied','cleaning','maintenance','working'];
-  const next = order[(order.indexOf(room.status)+1)%order.length];
+  const order = ['empty', 'occupied', 'cleaning', 'maintenance', 'working'];
+  const next = order[(order.indexOf(room.status) + 1) % order.length];
 
   await fetch('/api/room/' + room.room, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({status:next})
-  });
-
-  loadRooms();
-}
-
-/* LONG PRESS NOTE */
-function addLongPressNote(el, room) {
-  let timer;
-  const start = e => {
-    e.preventDefault();
-    timer = setTimeout(()=>openNote(room),600);
-  };
-  const stop = () => clearTimeout(timer);
-
-  el.addEventListener('touchstart', start);
-  el.addEventListener('mousedown', start);
-  el.addEventListener('touchend', stop);
-  el.addEventListener('mouseup', stop);
-  el.addEventListener('mouseleave', stop);
-
-  el.addEventListener('contextmenu', e => {
-    e.preventDefault();
-    openNote(room);
-  });
-}
-
-async function openNote(room) {
-  const note = prompt(`Room ${room.room} - Note`, room.note || '');
-  if (note === null) return;
-
-  await fetch('/api/room-note/' + room.room, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ note: note.trim() })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: next })
   });
 
   loadRooms();
@@ -279,8 +293,58 @@ async function openNote(room) {
 
 floorFilter.onchange = renderRooms;
 searchRoom.oninput = renderRooms;
-loadRooms();
-</script>
 
+loadRooms();
+
+async function addRoom() {
+  const room = document.getElementById('newRoom').value;
+
+  if (!room) {
+    alert("Enter room number");
+    return;
+  }
+
+  const res = await fetch('/api/add-room', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room: Number(room) })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    document.getElementById('newRoom').value = '';
+    loadRooms(); // refresh buttons
+  } else {
+    alert(data.message);
+  }
+}
+
+async function deleteRoom() {
+  const room = document.getElementById('deleteRoom').value;
+
+  if (!room) {
+    alert("Enter room number to delete");
+    return;
+  }
+
+  if (!confirm(`Delete room ${room}?`)) return;
+
+  const res = await fetch('/api/delete-room/' + room, {
+    method: 'DELETE'
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    document.getElementById('deleteRoom').value = '';
+    loadRooms(); // refresh
+  } else {
+    alert(data.message);
+  }
+}
+
+</script>
+  
 </body>
 </html>
