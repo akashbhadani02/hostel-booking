@@ -166,185 +166,52 @@
 <div class="rooms" id="rooms"></div>
 
 <script>
-    const roomNotes = JSON.parse(localStorage.getItem('roomNotes') || '{}');
+/* ================= CONFIG ================= */
+const API_BASE = "https://spss-hostel-api.onrender.com";
 
-function saveNotes() {
-  localStorage.setItem('roomNotes', JSON.stringify(roomNotes));
+/* ========================================== */
+
+/* ---------- NOTES (MongoDB) ---------- */
+let roomNotes = {};
+
+async function loadNotes() {
+  const res = await fetch(API_BASE + "/api/notes");
+  const data = await res.json();
+
+  roomNotes = {};
+  data.forEach(n => {
+    roomNotes[n.room] = n.text;
+  });
 }
 
-function editNote(roomNo) {
-  const text = prompt(`Note for Room ${roomNo}`, roomNotes[roomNo] || '');
+async function editNote(roomNo) {
+  const text = prompt(`Note for Room ${roomNo}`, roomNotes[roomNo] || "");
   if (text === null) return;
 
-  if (text.trim() === '') {
-    delete roomNotes[roomNo];
-  } else {
-    roomNotes[roomNo] = text.trim();
-  }
-  saveNotes();
+  await fetch(API_BASE + "/api/note/" + roomNo, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ note: text.trim() })
+  });
+
+  await loadNotes();
   renderRooms();
 }
 
+/* ---------- ROOMS ---------- */
 let allRooms = [];
 
 async function loadRooms() {
-  const res = await fetch('/api/rooms');
+  const res = await fetch(API_BASE + "/api/rooms");
   allRooms = await res.json();
+
+  await loadNotes();
   renderRooms();
 }
 
-function renderRooms() {
-  const container = document.getElementById('rooms');
-  container.innerHTML = '';
-
-  const floorFilter = document.getElementById('floorFilter').value;
-  const search = document.getElementById('searchRoom').value;
-
-  // ---- stats ----
-  const stats = { empty:0, occupied:0, cleaning:0, maintenance:0, working:0};
-  allRooms.forEach(r => stats[r.status]++);
-  emptyCount.innerText = stats.empty;
-  occupiedCount.innerText = stats.occupied;
-  cleaningCount.innerText = stats.cleaning;
-  maintenanceCount.innerText = stats.maintenance;
-  workingCount.innerText = stats.working;
-
-  // ---- group rooms by floor ----
-  const floors = {};
-
-  allRooms.forEach(r => {
-    const roomStr = String(r.room);
-    const floor = roomStr.slice(0, roomStr.length - 2); // floor number
-
-    if (floorFilter && floor !== floorFilter) return;
-    if (search && !roomStr.includes(search)) return;
-
-    if (!floors[floor]) floors[floor] = [];
-    floors[floor].push(r);
-  });
-
-  // ---- render floors ----
-  Object.keys(floors).sort((a,b)=>a-b).forEach(floor => {
-    const section = document.createElement('div');
-    section.className = 'floor-section';
-
-    const title = document.createElement('div');
-    title.className = 'floor-title';
-    title.innerText = `Floor ${floor}`;
-
-    const roomWrap = document.createElement('div');
-    roomWrap.className = 'floor-rooms';
-
-    floors[floor].forEach(r => {
-      const btn = document.createElement('button');
-      btn.className = `room-btn ${r.status}`;
-      btn.innerText = r.room;
-btn.onclick = () => cycleStatus(r);
-
-// 📝 NOTE ICON + TOOLTIP
-if (roomNotes[r.room]) {
-  const icon = document.createElement('span');
-  icon.className = 'note-icon';
-  icon.innerText = '📝';
-  btn.appendChild(icon);
-
-  const tip = document.createElement('div');
-  tip.className = 'note-tooltip';
-  tip.innerText = roomNotes[r.room];
-  btn.appendChild(tip);
-}
-
-// LONG PRESS (MOBILE)
-let pressTimer;
-btn.addEventListener('touchstart', () => {
-  pressTimer = setTimeout(() => editNote(r.room), 600);
-});
-btn.addEventListener('touchend', () => clearTimeout(pressTimer));
-
-// RIGHT CLICK (PC)
-btn.addEventListener('contextmenu', e => {
-  e.preventDefault();
-  editNote(r.room);
-});
-
-roomWrap.appendChild(btn);
-
-    });
-
-    section.appendChild(title);
-    section.appendChild(roomWrap);
-    container.appendChild(section);
-  });
-}
-
-
-async function cycleStatus(room) {
-  const order = ['empty', 'occupied', 'cleaning', 'maintenance', 'working'];
-  const next = order[(order.indexOf(room.status) + 1) % order.length];
-
-  await fetch('/api/room/' + room.room, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: next })
-  });
-
-  loadRooms();
-}
-
-floorFilter.onchange = renderRooms;
-searchRoom.oninput = renderRooms;
-
-loadRooms();
-
-async function addRoom() {
-  const room = document.getElementById('newRoom').value;
-
-  if (!room) {
-    alert("Enter room number");
-    return;
-  }
-
-  const res = await fetch('/api/add-room', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ room: Number(room) })
-  });
-
-  const data = await res.json();
-
-  if (data.success) {
-    document.getElementById('newRoom').value = '';
-    loadRooms(); // refresh buttons
-  } else {
-    alert(data.message);
-  }
-}
-
-async function deleteRoom() {
-  const room = document.getElementById('deleteRoom').value;
-
-  if (!room) {
-    alert("Enter room number to delete");
-    return;
-  }
-
-  if (!confirm(`Delete room ${room}?`)) return;
-
-  const res = await fetch('/api/delete-room/' + room, {
-    method: 'DELETE'
-  });
-
-  const data = await res.json();
-
-  if (data.success) {
-    document.getElementById('deleteRoom').value = '';
-    loadRooms(); // refresh
-  } else {
-    alert(data.message);
-  }
-}
-
+/* ⚠️ rest of code continues exactly here */
 </script>
+
   
 </body>
 </html>
