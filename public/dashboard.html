@@ -278,17 +278,27 @@ roomWrap.appendChild(btn);
 }
 
 
-async function cycleStatus(room) {
+async function cycleStatus(room, btn) {
   const order = ['empty', 'occupied', 'cleaning', 'maintenance', 'working'];
   const next = order[(order.indexOf(room.status) + 1) % order.length];
 
-  await fetch('/api/room/' + room.room, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: next })
-  });
+  // ✅ INSTANT UI UPDATE
+  btn.className = `room-btn ${next}`;
+  room.status = next;
 
-  loadRooms();
+  // ✅ UPDATE STATS WITHOUT RELOAD
+  renderRooms();
+
+  // 🔄 SAVE TO BACKEND (background)
+  try {
+    await fetch('/api/room/' + room.room, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: next })
+    });
+  } catch (err) {
+    alert("Server error! Status not saved.");
+  }
 }
 
 floorFilter.onchange = renderRooms;
