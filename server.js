@@ -178,34 +178,3 @@ app.delete('/api/delete-room/:room', async (req, res) => {
   res.json({ success: true });
 });
 
-// ---------- ROOM NOTES ----------
-db.run(`
-  CREATE TABLE IF NOT EXISTS room_notes (
-    room INTEGER PRIMARY KEY,
-    note TEXT
-  )
-`);
-
-app.get("/api/room-notes", (req, res) => {
-  db.all("SELECT * FROM room_notes", [], (err, rows) => {
-    res.json(rows);
-  });
-});
-
-app.post("/api/room-note", (req, res) => {
-  const { room, note } = req.body;
-
-  if (!note || note.trim() === "") {
-    db.run("DELETE FROM room_notes WHERE room=?", [room]);
-    return res.json({ success: true });
-  }
-
-  db.run(
-    `INSERT INTO room_notes (room, note)
-     VALUES (?, ?)
-     ON CONFLICT(room) DO UPDATE SET note=excluded.note`,
-    [room, note],
-    () => res.json({ success: true })
-  );
-});
-
