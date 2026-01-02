@@ -166,45 +166,32 @@
 <div class="rooms" id="rooms"></div>
 
 <script>
-let roomNotes = {};
+    const roomNotes = JSON.parse(localStorage.getItem('roomNotes') || '{}');
 
-async function loadNotes() {
-  const res = await fetch('/api/room-notes');
-  const data = await res.json();
-
-  roomNotes = {};
-  data.forEach(n => {
-    roomNotes[n.room] = n.note;
-  });
+function saveNotes() {
+  localStorage.setItem('roomNotes', JSON.stringify(roomNotes));
 }
 
-async function editNote(roomNo) {
+function editNote(roomNo) {
   const text = prompt(`Note for Room ${roomNo}`, roomNotes[roomNo] || '');
   if (text === null) return;
 
-  await fetch('/api/room-note', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      room: roomNo,
-      note: text.trim()
-    })
-  });
-
-  await loadNotes();
+  if (text.trim() === '') {
+    delete roomNotes[roomNo];
+  } else {
+    roomNotes[roomNo] = text.trim();
+  }
+  saveNotes();
   renderRooms();
 }
-
 
 let allRooms = [];
 
 async function loadRooms() {
-  await loadNotes();              // 👈 IMPORTANT
   const res = await fetch('/api/rooms');
   allRooms = await res.json();
   renderRooms();
 }
-
 
 function renderRooms() {
   const container = document.getElementById('rooms');
