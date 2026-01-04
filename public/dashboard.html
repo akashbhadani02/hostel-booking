@@ -166,7 +166,11 @@
 <div class="rooms" id="rooms"></div>
 
 <script>
-    const roomNotes = JSON.parse(localStorage.getItem('roomNotes') || '{}');
+if(localStorage.getItem("loggedIn") !== "true"){
+  window.location.href = "login.html";
+}
+
+  const roomNotes = JSON.parse(localStorage.getItem('roomNotes') || '{}');
 
 function saveNotes() {
   localStorage.setItem('roomNotes', JSON.stringify(roomNotes));
