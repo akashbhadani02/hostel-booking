@@ -5,71 +5,57 @@
 <title>SPSS Hostel Dashboard By AB</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  padding: 20px;
-}
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    padding: 20px;
+  }
 
-/* ---------- SERVER SLOW SCREEN ---------- */
-#serverSlowScreen {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #000;
-  color: #ff3b3b;
-  font-size: 36px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
+  h1 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
 
-/* ---------- DASHBOARD ---------- */
-h1 {
-  text-align: center;
-  margin-bottom: 10px;
-}
+  .controls {
+    max-width: 1000px;
+    margin: 10px auto;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 
-.controls {
-  max-width: 1000px;
-  margin: 10px auto;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+  select, input {
+    padding: 8px;
+    font-size: 14px;
+  }
 
-select, input {
-  padding: 8px;
-  font-size: 14px;
-}
+  .stats {
+    max-width: 1000px;
+    margin: 10px auto;
+    display: flex;
+    justify-content: space-around;
+    font-weight: bold;
+  }
 
-.stats {
-  max-width: 1000px;
-  margin: 10px auto;
-  display: flex;
-  justify-content: space-around;
-  font-weight: bold;
-}
+  .rooms {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    max-width: 1000px;
+    margin: auto;
+  }
 
-.rooms {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 10px;
-  max-width: 1000px;
-  margin: auto;
-}
-
-.room-btn {
-  padding: 15px 0;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  color: white;
+  .room-btn {
+    padding: 15px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+  }
+  .room-btn {
   position: relative;
 }
 
@@ -90,7 +76,7 @@ select, input {
   color: #fff;
   padding: 6px 8px;
   border-radius: 5px;
-  font-size: 16px;
+  font-size: 20px;
   white-space: nowrap;
   z-index: 10;
 }
@@ -99,36 +85,43 @@ select, input {
   display: block;
 }
 
-.empty { background: #28a745; }
-.occupied { background: #dc3545; }
-.cleaning { background: #ffc107; color: black; }
-.maintenance { background: #007bff; }
-.working { background: #5c584e; }
 
-.floor-section { margin-bottom: 30px; }
+  .empty { background: #28a745; }
+  .occupied { background: #dc3545; }
+  .cleaning { background: #ffc107; color: black; }
+  .maintenance { background: #007bff; }
+  .working { background: #5c584e; color : white }
+
+.floor-section {
+  margin-bottom: 30px;
+}
 
 .floor-title {
   font-size: 18px;
   font-weight: bold;
   margin: 15px 0 10px;
+  color: #333;
 }
+
+.floor-rooms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+}
+.room {
+  position: relative;
+  cursor: pointer;
+}
+
+
 </style>
 </head>
 
 <body>
 
-<!-- SERVER SLOW SCREEN -->
-<div id="serverSlowScreen">⚠️ SERVER SLOW</div>
-
-<!-- DASHBOARD WRAPPER -->
-<div id="dashboard">
-
-<button onclick="toggleServer()" style="padding:8px 14px;margin-bottom:10px;">
-  🚨 Stop Streaming
-</button>
-
 <h1>🏨SPSS Hostel Room</h1>
 
+<!-- CONTROLS -->
 <div class="controls">
   <select id="floorFilter">
     <option value="">All Floors</option>
@@ -150,6 +143,7 @@ select, input {
   <input type="number" id="searchRoom" placeholder="Search room">
 </div>
 
+<!-- STATS -->
 <div class="stats">
   <div>🟢 ખાલી: <span id="emptyCount">0</span></div>
   <div>🔴 આપેલી: <span id="occupiedCount">0</span></div>
@@ -158,7 +152,9 @@ select, input {
   <div>⚫ અવ્યવસ્થા: <span id="workingCount">0</span></div>
 </div>
 
-<div class="controls">
+<!-- ROOMS --> 
+ <div class="controls">
+  Date<input type="date" placeholder="Enter Date">
   <input type="number" id="newRoom" placeholder="Enter room number">
   <button onclick="addRoom()">➕ Add Room</button>
 
@@ -166,39 +162,49 @@ select, input {
   <button onclick="deleteRoom()">❌ Delete Room</button>
 </div>
 
-<button onclick="logout()">🙂</button>
+  <button onclick="logout()">🙂</button>
+
 
 <div class="rooms" id="rooms"></div>
-</div>
 
 <script>
-if(localStorage.getItem("loggedIn") !== "true"){
-  window.location.href = "login.html";
+
+
+  const roomNotes = JSON.parse(localStorage.getItem('roomNotes') || '{}');
+
+function saveNotes() {
+  localStorage.setItem('roomNotes', JSON.stringify(roomNotes));
 }
 
-let serverStopped = false;
+function editNote(roomNo) {
+  const text = prompt(`Note for Room ${roomNo}`, roomNotes[roomNo] || '');
+  if (text === null) return;
+
+  if (text.trim() === '') {
+    delete roomNotes[roomNo];
+  } else {
+    roomNotes[roomNo] = text.trim();
+  }
+  saveNotes();
+  renderRooms();
+}
+
 let allRooms = [];
-const roomNotes = JSON.parse(localStorage.getItem('roomNotes') || '{}');
 
-function toggleServer(){
-  serverStopped = !serverStopped;
-  document.getElementById("dashboard").style.display = serverStopped ? "none" : "block";
-  document.getElementById("serverSlowScreen").style.display = serverStopped ? "flex" : "none";
-  if(!serverStopped) loadRooms();
-}
-
-async function loadRooms(){
-  if(serverStopped) return;
+async function loadRooms() {
   const res = await fetch('/api/rooms');
   allRooms = await res.json();
   renderRooms();
 }
 
-function renderRooms(){
-  if(serverStopped) return;
+function renderRooms() {
   const container = document.getElementById('rooms');
   container.innerHTML = '';
 
+  const floorFilter = document.getElementById('floorFilter').value;
+  const search = document.getElementById('searchRoom').value;
+
+  // ---- stats ----
   const stats = { empty:0, occupied:0, cleaning:0, maintenance:0, working:0};
   allRooms.forEach(r => stats[r.status]++);
   emptyCount.innerText = stats.empty;
@@ -207,50 +213,146 @@ function renderRooms(){
   maintenanceCount.innerText = stats.maintenance;
   workingCount.innerText = stats.working;
 
-  allRooms.forEach(r=>{
-    const btn=document.createElement("button");
-    btn.className=`room-btn ${r.status}`;
-    btn.innerText=r.room;
-    btn.onclick=()=>cycleStatus(r);
-    container.appendChild(btn);
+  // ---- group rooms by floor ----
+  const floors = {};
+
+  allRooms.forEach(r => {
+    const roomStr = String(r.room);
+    const floor = roomStr.slice(0, roomStr.length - 2); // floor number
+
+    if (floorFilter && floor !== floorFilter) return;
+    if (search && !roomStr.includes(search)) return;
+
+    if (!floors[floor]) floors[floor] = [];
+    floors[floor].push(r);
+  });
+
+  // ---- render floors ----
+  Object.keys(floors).sort((a,b)=>a-b).forEach(floor => {
+    const section = document.createElement('div');
+    section.className = 'floor-section';
+
+    const title = document.createElement('div');
+    title.className = 'floor-title';
+    title.innerText = `Floor ${floor}`;
+
+    const roomWrap = document.createElement('div');
+    roomWrap.className = 'floor-rooms';
+
+    floors[floor].forEach(r => {
+      const btn = document.createElement('button');
+      btn.className = `room-btn ${r.status}`;
+      btn.innerText = r.room;
+btn.onclick = () => cycleStatus(r);
+
+// 📝 NOTE ICON + TOOLTIP
+if (roomNotes[r.room]) {
+  const icon = document.createElement('span');
+  icon.className = 'note-icon';
+  icon.innerText = '📝';
+  btn.appendChild(icon);
+
+  const tip = document.createElement('div');
+  tip.className = 'note-tooltip';
+  tip.innerText = roomNotes[r.room];
+  btn.appendChild(tip);
+}
+
+// LONG PRESS (MOBILE)
+let pressTimer;
+btn.addEventListener('touchstart', () => {
+  pressTimer = setTimeout(() => editNote(r.room), 600);
+});
+btn.addEventListener('touchend', () => clearTimeout(pressTimer));
+
+// RIGHT CLICK (PC)
+btn.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  editNote(r.room);
+});
+
+roomWrap.appendChild(btn);
+
+    });
+
+    section.appendChild(title);
+    section.appendChild(roomWrap);
+    container.appendChild(section);
   });
 }
 
-async function cycleStatus(room){
-  if(serverStopped) return;
-  const order=['empty','occupied','cleaning','maintenance','working'];
-  const next=order[(order.indexOf(room.status)+1)%order.length];
-  await fetch('/api/room/'+room.room,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({status:next})
+
+async function cycleStatus(room) {
+  const order = ['empty', 'occupied', 'cleaning', 'maintenance', 'working'];
+  const next = order[(order.indexOf(room.status) + 1) % order.length];
+
+  await fetch('/api/room/' + room.room, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: next })
   });
+
   loadRooms();
 }
 
-async function addRoom(){
-  if(serverStopped) return;
-  const room=document.getElementById('newRoom').value;
-  if(!room) return alert("Enter room number");
-  await fetch('/api/add-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({room:Number(room)})});
-  loadRooms();
-}
-
-async function deleteRoom(){
-  if(serverStopped) return;
-  const room=document.getElementById('deleteRoom').value;
-  if(!room) return;
-  await fetch('/api/delete-room/'+room,{method:'DELETE'});
-  loadRooms();
-}
-
-function logout(){
-  localStorage.removeItem("loggedIn");
-  window.location.href="login.html";
-}
+floorFilter.onchange = renderRooms;
+searchRoom.oninput = renderRooms;
 
 loadRooms();
-</script>
 
+async function addRoom() {
+  const room = document.getElementById('newRoom').value;
+
+  if (!room) {
+    alert("Enter room number");
+    return;
+  }
+
+  const res = await fetch('/api/add-room', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room: Number(room) })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    document.getElementById('newRoom').value = '';
+    loadRooms(); // refresh buttons
+  } else {
+    alert(data.message);
+  }
+}
+
+async function deleteRoom() {
+  const room = document.getElementById('deleteRoom').value;
+
+  if (!room) {
+    alert("Enter room number to delete");
+    return;
+  }
+
+  if (!confirm(`Delete room ${room}?`)) return;
+
+  const res = await fetch('/api/delete-room/' + room, {
+    method: 'DELETE'
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    document.getElementById('deleteRoom').value = '';
+    loadRooms(); // refresh
+  } else {
+    alert(data.message);
+  }
+}
+function logout(){
+  localStorage.removeItem("loggedIn");
+  window.location.href = "login.html";
+}
+
+</script>
+  
 </body>
 </html>
