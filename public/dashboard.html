@@ -162,6 +162,8 @@
   <button onclick="deleteRoom()">❌ Delete Room</button>
 </div>
 
+  <button onclick="logout()">🚪 Logout</button>
+
 
 <div class="rooms" id="rooms"></div>
 
@@ -346,6 +348,10 @@ async function deleteRoom() {
   } else {
     alert(data.message);
   }
+}
+function logout(){
+  localStorage.removeItem("loggedIn");
+  window.location.href = "login.html";
 }
 
 </script>
